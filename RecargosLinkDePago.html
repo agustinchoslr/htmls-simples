@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Cuotas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 500px;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .btn-lg, .form-control-lg {
+            font-size: 1.25rem;
+        }
+        .fade-move-up {
+            transition: all 0.5s ease;
+        }
+        .fade-move-up.active {
+            transform: translateY(-20px);
+            opacity: 0.6;
+        }
+        #volver {
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+        #resultado {
+            white-space: pre-wrap;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Calculadora de Cuotas</h1>
+        
+        <div id="opcionesIniciales" class="d-flex justify-content-center mb-4">
+            <button id="sinRecargo" class="btn btn-primary btn-lg mx-2">Sin Recargos</button>
+            <button id="conRecargo" class="btn btn-secondary btn-lg mx-2">Con Recargos</button>
+        </div>
+
+        <div id="formulario" class="d-none">
+            <div id="opcionElegida" class="text-center mb-3">
+                <span id="opcionTexto" class="h4"></span>
+                <button id="volver" class="btn btn-link">Volver a elegir</button>
+            </div>
+
+            <input type="number" id="monto" class="form-control form-control-lg mb-3" placeholder="Ingrese el monto">
+
+            <div id="cuotasButtons" class="btn-group-vertical w-100" role="group">
+                <input type="radio" class="btn-check" name="cuotas" id="cuotas1" value="1" autocomplete="off">
+                <label class="btn btn-outline-primary" for="cuotas1">1 pago sin recargo</label>
+
+                <input type="radio" class="btn-check" name="cuotas" id="cuotas3" value="3" autocomplete="off">
+                <label class="btn btn-outline-primary" for="cuotas3">3 cuotas (Recargo del: 7,88%)</label>
+
+                <input type="radio" class="btn-check" name="cuotas" id="cuotas6" value="6" autocomplete="off">
+                <label class="btn btn-outline-primary" for="cuotas6">6 cuotas (Recargo del: 16,08%)</label>
+
+                <input type="radio" class="btn-check" name="cuotas" id="cuotas9" value="9" autocomplete="off">
+                <label class="btn btn-outline-primary" for="cuotas9">9 cuotas (Recargo del: 24,85%)</label>
+
+                <input type="radio" class="btn-check" name="cuotas" id="cuotas12" value="12" autocomplete="off">
+                <label class="btn btn-outline-primary" for="cuotas12">12 cuotas (Recargo del: 34,22%)</label>
+            </div>
+
+            <button onclick="calcular()" class="btn btn-success btn-lg w-100 mt-3">Calcular</button>
+        </div>
+
+        <div id="resultadoContainer" class="d-none">
+            <div id="resultado" class="alert alert-info"></div>
+            <button onclick="copiarResultado()" class="btn btn-primary btn-lg w-100 mt-3">Copiar al portapapeles</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const recargos = {
+            1: 0,
+            3: 7.88,
+            6: 16.08,
+            9: 24.85,
+            12: 34.22
+        };
+
+        let opcionElegida = '';
+
+        document.getElementById('sinRecargo').addEventListener('click', () => seleccionarOpcion('sinRecargo'));
+        document.getElementById('conRecargo').addEventListener('click', () => seleccionarOpcion('conRecargo'));
+        document.getElementById('volver').addEventListener('click', volverAElegir);
+
+        function seleccionarOpcion(opcion) {
+            opcionElegida = opcion;
+            document.getElementById('opcionesIniciales').classList.add('fade-move-up', 'active');
+            setTimeout(() => {
+                document.getElementById('opcionesIniciales').classList.add('d-none');
+                document.getElementById('formulario').classList.remove('d-none');
+                document.getElementById('opcionTexto').textContent = opcion === 'sinRecargo' ? 'Sin Recargos' : 'Con Recargos';
+            }, 500);
+        }
+
+        function volverAElegir() {
+            document.getElementById('formulario').classList.add('d-none');
+            document.getElementById('opcionesIniciales').classList.remove('d-none', 'fade-move-up', 'active');
+            document.getElementById('resultadoContainer').classList.add('d-none');
+            opcionElegida = '';
+        }
+
+        function calcular() {
+            const monto = parseFloat(document.getElementById('monto').value);
+            const cuotasElegidas = document.querySelector('input[name="cuotas"]:checked');
+            
+            if (!monto || !cuotasElegidas) {
+                alert('Por favor, ingrese un monto y seleccione la cantidad de cuotas.');
+                return;
+            }
+
+            const cuotas = parseInt(cuotasElegidas.value);
+            const recargo = recargos[cuotas];
+            
+            let montoTotal, montoCuota;
+            
+            if (opcionElegida === 'sinRecargo') {
+                montoTotal = monto * (1 + recargo / 100);
+                montoCuota = montoTotal / cuotas;
+            } else {
+                montoTotal = monto;
+                montoCuota = monto / cuotas;
+            }
+            
+            const mensaje = `link.mercadopago.com.ar/ferreterasanluis
+        *Monto a colocar: $${montoTotal.toFixed(2)}*
+        *Cantidad de cuotas a elegir: ${cuotas}*
+
+
+_El monto de la cuota será entonces de: $${montoCuota.toFixed(2)}_
+
+Tu compra de ${monto} será en ${cuotas} cuotas, por lo que el Recargo aplicado es de: ${recargo}%
+
+Si bien se mostrarán más cuotas, *Debes abonar únicamente en ${cuotas} cuotas*. De lo contrario revertiremos la operación.`;
+            
+            document.getElementById('resultado').textContent = mensaje;
+            document.getElementById('resultadoContainer').classList.remove('d-none');
+        }
+
+        function copiarResultado() {
+            const resultado = document.getElementById('resultado').textContent;
+            navigator.clipboard.writeText(resultado).then(() => {
+                alert('Resultado copiado al portapapeles');
+            });
+        }
+    </script>
+</body>
+</html>
+
