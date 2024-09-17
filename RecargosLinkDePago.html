@@ -48,7 +48,7 @@
             <button id="sinRecargo" class="btn btn-primary btn-lg mx-2">Sin Recargos</button>
             <button id="conRecargo" class="btn btn-secondary btn-lg mx-2">Con Recargos</button>
         </div>
-
+        
         <div id="formulario" class="d-none">
             <div id="opcionElegida" class="text-center mb-3">
                 <span id="opcionTexto" class="h4"></span>
@@ -81,6 +81,23 @@
             <div id="resultado" class="alert alert-info"></div>
             <button onclick="copiarResultado()" class="btn btn-primary btn-lg w-100 mt-3">Copiar al portapapeles</button>
         </div>
+       <br><hr><br><br> <div><small>Recordá que MercadoPago tiene recargos diferentes que mostrador.<br><br> En este sentido, Usá siempre la opción "sin recargos" para poner el precio del producto y que este sistema te calcule el precio final con el recargo según la cuota elegida.</small></div>
+    </div>
+
+    <!-- Offcanvas -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasInstrucciones" aria-labelledby="offcanvasInstruccionesLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="offcanvasInstruccionesLabel">Perfecto, ahora atención:</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <p>Ya copiaste el texto, ahora pegalo en Whatsapp.</p>
+            <p>Cuando hagas la factura, recordá que la financiación debe ir en un ítem separado denominado intereses:</p>
+            <ul>
+                <li><strong>Producto/s</strong> | $<span id="montoProducto"></span></li>
+                <li><strong>INTERESES</strong> | $<span id="montoIntereses"></span></li>
+            </ul>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -94,6 +111,8 @@
         };
 
         let opcionElegida = '';
+        let montoIngresado = 0;
+        let montoRecargo = 0;
 
         document.getElementById('sinRecargo').addEventListener('click', () => seleccionarOpcion('sinRecargo'));
         document.getElementById('conRecargo').addEventListener('click', () => seleccionarOpcion('conRecargo'));
@@ -117,10 +136,10 @@
         }
 
         function calcular() {
-            const monto = parseFloat(document.getElementById('monto').value);
+            montoIngresado = parseFloat(document.getElementById('monto').value);
             const cuotasElegidas = document.querySelector('input[name="cuotas"]:checked');
             
-            if (!monto || !cuotasElegidas) {
+            if (!montoIngresado || !cuotasElegidas) {
                 alert('Por favor, ingrese un monto y seleccione la cantidad de cuotas.');
                 return;
             }
@@ -131,11 +150,14 @@
             let montoTotal, montoCuota;
             
             if (opcionElegida === 'sinRecargo') {
-                montoTotal = monto * (1 + recargo / 100);
+                montoTotal = montoIngresado * (1 + recargo / 100);
                 montoCuota = montoTotal / cuotas;
+                montoRecargo = montoTotal - montoIngresado;
             } else {
-                montoTotal = monto;
-                montoCuota = monto / cuotas;
+                montoTotal = montoIngresado;
+                montoCuota = montoIngresado / cuotas;
+                montoRecargo = montoIngresado * (recargo / (100 + recargo));
+                montoIngresado = montoTotal - montoRecargo;
             }
             
             const mensaje = `link.mercadopago.com.ar/ferreterasanluis
@@ -145,21 +167,26 @@
 
 _El monto de la cuota será entonces de: $${montoCuota.toFixed(2)}_
 
-Tu compra de ${monto} será en ${cuotas} cuotas, por lo que el Recargo aplicado es de: ${recargo}%
+Tu compra de ${montoIngresado.toFixed(2)} será en ${cuotas} cuotas, por lo que el Recargo aplicado es de: ${recargo}%
 
 Si bien se mostrarán más cuotas, *Debes abonar únicamente en ${cuotas} cuotas*. De lo contrario revertiremos la operación.`;
             
             document.getElementById('resultado').textContent = mensaje;
             document.getElementById('resultadoContainer').classList.remove('d-none');
+
+            // Actualizar los montos en el Offcanvas
+            document.getElementById('montoProducto').textContent = montoIngresado.toFixed(2);
+            document.getElementById('montoIntereses').textContent = montoRecargo.toFixed(2);
         }
 
         function copiarResultado() {
             const resultado = document.getElementById('resultado').textContent;
             navigator.clipboard.writeText(resultado).then(() => {
-                alert('Resultado copiado al portapapeles');
+                // Mostrar el Offcanvas
+                var offcanvas = new bootstrap.Offcanvas(document.getElementById('offcanvasInstrucciones'));
+                offcanvas.show();
             });
         }
     </script>
 </body>
 </html>
-
